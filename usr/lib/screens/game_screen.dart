@@ -23,6 +23,8 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final gameLogic = context.watch<GameLogic>();
+    final screenSize = MediaQuery.of(context).size;
+    final isPortrait = screenSize.height > screenSize.width;
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E2C),
@@ -63,11 +65,13 @@ class _GameScreenState extends State<GameScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      // Calculate cell size to fit 8x8 grid in available space
-                      double size = constraints.maxWidth < constraints.maxHeight 
+                      // Calculate cell size to fit 8x8 grid in available space, with a cap for responsiveness
+                      double availableSize = (constraints.maxWidth < constraints.maxHeight 
                           ? constraints.maxWidth 
-                          : constraints.maxHeight;
-                      _cellSize = (size - 32) / GameLogic.gridSize; // -32 for some padding/margin safety
+                          : constraints.maxHeight) - 32;
+                      _cellSize = availableSize / GameLogic.gridSize;
+                      // Cap cell size to prevent excessive enlargement on large screens (e.g., web)
+                      _cellSize = _cellSize.clamp(20.0, 60.0);
 
                       return Stack(
                         children: [
@@ -162,9 +166,10 @@ class _GameScreenState extends State<GameScreen> {
               ),
             ),
 
-            // Dock (Available Shapes)
+            // Dock (Available Shapes) - Dynamic height based on screen size
             Container(
-              height: 150,
+              height: isPortrait ? screenSize.height * 0.18 : screenSize.height * 0.12, // Responsive height
+              constraints: const BoxConstraints(minHeight: 100, maxHeight: 180), // Safety bounds
               padding: const EdgeInsets.only(bottom: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
